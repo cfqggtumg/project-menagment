@@ -2,6 +2,12 @@ import express from 'express';
 import joi from 'joi';
 import mongoose from 'mongoose';
 import Project from '../models/index.js';
+import rateLimit from 'express-rate-limit';
+
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+});
 
 const api = express.Router();
 
@@ -165,7 +171,7 @@ api.put('/project/:id/task/:taskId', async (req, res) => {
     }
 });
 
-api.delete('/project/:id/task/:taskId', async (req, res) => {
+api.delete('/project/:id/task/:taskId', limiter, async (req, res) => {
     if (!req.params.id || !req.params.taskId) return res.status(500).send(`server error`);
 
     try {
