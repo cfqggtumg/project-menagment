@@ -2,3 +2,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Modo diurno (por defecto) */
+body {
+    background-color: white;
+    color: black;
+}
+
+/* Modo nocturno */
+body.dark-mode {
+    background-color: rgb(20, 20, 20);
+    color: white;
+}
+
+/* Forzar texto blanco en modo nocturno */
+body.dark-mode * {
+    color: white !important;
+}
+
+body.bg-dark {
+    background-color: rgb(20, 20, 20);
+    color: white;
+}
