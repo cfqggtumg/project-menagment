@@ -1,15 +1,15 @@
 import React from 'react'
-import Navbar from './Navbar'
-import Sidebar from './Sidebar'
+import Navbar from '../components/Headers/Navbar'
+import Menu from '../components/Menu';
 
 const AppLayout = ({ children }) => {
     return (
+        <>
+            <Menu />
         <div className='bg-white'>
             <Navbar />
             <div className=' w-screen flex container mx-auto' style={{ height: 'calc(100vh - 56px)' }}>
-                <div className="w-[220px]">
-                    <Sidebar />
-                </div>
+
                 <div className="flex-1">
                     <div className="flex">
                         {children}
@@ -17,6 +17,7 @@ const AppLayout = ({ children }) => {
                 </div>
             </div>
         </div>
+        </>
     )
 }
 
