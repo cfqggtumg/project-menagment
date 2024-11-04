@@ -1,49 +1,97 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './Css/UserAdmin.css'; // Importa los estilos CSS
+import UserModal from './UserModal';
+import './Css/UserAdmin.css';
 
 const UserAdmin = () => {
+  const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userData, setUserData] = useState({ username: '', password: '', role: '' });
 
   useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const response = await axios.get('http://localhost:9000/api/roles');
-        setRoles(response.data);
-      } catch (error) {
-        console.error('Error fetching roles:', error);
-      }
-    };
+    fetchUsers();
     fetchRoles();
   }, []);
 
-  const handleRegister = async () => {
+  const fetchUsers = async () => {
     try {
-      console.log('Registering user with role:', role); // Agrega este console.log para depuración
-      await axios.post('http://localhost:9000/api/users/register', { username, password, role });
-      // Fetch users again or update state
+      const response = await axios.get('http://localhost:9000/api/users');
+      setUsers(response.data);
     } catch (error) {
-      console.error('Error registering user:', error);
+      console.error('Error fetching users:', error);
     }
   };
 
+  const fetchRoles = async () => {
+    try {
+      const response = await axios.get('http://localhost:9000/api/roles');
+      setRoles(response.data);
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (userData.id) {
+        await axios.put(`http://localhost:9000/api/users/${userData.id}`, userData);
+      } else {
+        await axios.post('http://localhost:9000/api/users/register', userData);
+      }
+      fetchUsers();
+      setIsModalOpen(false);
+      setUserData({ username: '', password: '', role: '' });
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleEdit = (user) => {
+    setUserData({ id: user._id, username: user.username, role: user.role.name });
+    setIsModalOpen(true);
+  };
+
   return (
-    <div className="user-admin-container">
-      <form className="user-admin-form">
-        <h2>Administración de Usuarios</h2>
-        <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <select value={role} onChange={(e) => setRole(e.target.value)}>
-          <option value="">Selecciona un rol</option>
-          {roles.map((role) => (
-            <option key={role._id} value={role.name}>{role.name}</option>
+    <div className="admin-container">
+      <div className="admin-header">
+        <h1>Gestión de Usuarios</h1>
+        <button onClick={() => {
+          setUserData({ username: '', password: '', role: '' });
+          setIsModalOpen(true);
+        }}>Nuevo Usuario</button>
+      </div>
+
+      <table className="admin-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map(user => (
+            <tr key={user._id}>
+              <td>{user.username}</td>
+              <td>{user.role?.name}</td>
+              <td>
+                <button onClick={() => handleEdit(user)}>Editar</button>
+              </td>
+            </tr>
           ))}
-        </select>
-        <button type="button" onClick={handleRegister}>Registrar</button>
-      </form>
+        </tbody>
+      </table>
+
+      <UserModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        userData={userData}
+        setUserData={setUserData}
+        roles={roles}
+        handleSubmit={handleSubmit}
+      />
     </div>
   );
 };
