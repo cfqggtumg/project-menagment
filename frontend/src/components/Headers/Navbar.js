@@ -1,22 +1,11 @@
+// Navbar.js
 import React, { useState } from 'react';
+import { FaUserCircle } from 'react-icons/fa';
+import UserMenuModal from './UserMenuModal';
 
-/**
- * Componente de barra de navegación que incluye un interruptor para cambiar entre modo claro y oscuro.
- * @component
- * @returns {JSX.Element} Retorna un elemento div que contiene la barra de navegación con un botón para alternar el modo oscuro.
- * 
- * @example
- * <Navbar />
- * 
- * @description
- * Este componente implementa una barra de navegación con las siguientes características:
- * - Utiliza un estado para controlar el modo oscuro/claro
- * - Incluye un botón con emojis (🌞/🌜) para alternar entre modos
- * - Modifica dinámicamente las clases CSS de los elementos para aplicar los estilos correspondientes
- * - Se adapta automáticamente al modo seleccionado cambiando el fondo y otros elementos visuales
- */
 const Navbar = () => {
   const [darkMode, setDarkMode] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
@@ -35,11 +24,19 @@ const Navbar = () => {
     });
   };
 
+  const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
+  };
+
   return (
-    <div className={`bg-${darkMode ? 'dark' : 'white'} shadow h-14`}>
-      <span onClick={toggleDarkMode} className="fixed top-4 right-4 cursor-pointer text-2xl">
+    <div className={`bg-${darkMode ? 'dark' : 'white'} shadow h-14 flex justify-between items-center px-4`}>
+      <span onClick={toggleDarkMode} className="cursor-pointer text-2xl">
         {darkMode ? '🌞' : '🌜'}
       </span>
+      <button onClick={toggleModal} className="preferences-icon">
+        <FaUserCircle size={24} />
+      </button>
+      {isModalOpen && <UserMenuModal onClose={toggleModal} />}
     </div>
   );
 }

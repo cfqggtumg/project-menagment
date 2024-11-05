@@ -2,6 +2,7 @@ import express from 'express';
 import User from '../models/User.js';
 import Role from '../models/Role.js';
 import bcrypt from 'bcrypt';
+import authMiddleware from '../middleware/authMiddleware.js'; // Importa el middleware de autenticación
 
 const router = express.Router();
 
@@ -26,6 +27,20 @@ router.get('/:id', async (req, res) => {
     res.send(user);
   } catch (error) {
     res.status(400).send(error);
+  }
+});
+
+// Ruta para obtener los datos del usuario loggeado
+router.get('/api/user', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password').populate('role');
+    if (!user) {
+      return res.status(404).send({ error: 'Usuario no encontrado' });
+    }
+    res.send(user);
+  } catch (error) {
+    console.error('Error al obtener los datos del usuario:', error);
+    res.status(500).send({ error: 'Error del servidor' });
   }
 });
 

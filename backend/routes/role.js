@@ -23,4 +23,20 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Nueva ruta PUT para actualizar un rol
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+
+  try {
+    const role = await Role.findByIdAndUpdate(id, { name }, { new: true });
+    if (!role) {
+      return res.status(404).send('Role not found');
+    }
+    res.send(role);
+  } catch (error) {
+    res.status(500).send('Server error');
+  }
+});
+
 export default router;
