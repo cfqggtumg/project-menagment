@@ -1,10 +1,12 @@
 import express from "express";
 import userRoutes from './routes/user.js';
 import roleRoutes from './routes/role.js';
+import authRoutes from './routes/auth.js';
 import api from './routes/index.js'; // Asegúrate de importar las rutas de proyectos
 import dotenv from 'dotenv';
 import mongoose from "mongoose";
 import cors from "cors";
+
 
 dotenv.config();
 
@@ -30,6 +32,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(api);
 app.use('/api/users', userRoutes);
 app.use('/api/roles', roleRoutes);
+app.use('/api/auth', authRoutes);
+
 
 app.listen(PORT, () => {
   console.log(`Your app is running in http://localhost:${PORT}`);

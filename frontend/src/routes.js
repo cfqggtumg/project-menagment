@@ -5,6 +5,7 @@ import UserAdmin from './components/UserAdmin';  // Importa UserAdmin
 import RoleAdmin from './components/RoleAdmin';  // Importa RoleAdmin
 
 
+
 var routes = [
   {
     path: "/",
@@ -28,5 +29,6 @@ var routes = [
     name: "Roles",
     component: <RoleAdmin />, // Añade la nueva ruta
   },
+
 ];
 export default routes;
