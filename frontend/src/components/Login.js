@@ -12,8 +12,9 @@ const Login = () => {
     try {
       const { data } = await axios.post('http://localhost:9000/api/auth/login', credentials);
       localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user)); // Almacenar el objeto user en localStorage
       localStorage.setItem('lastActivity', Date.now());
-      navigate('/dashboard');
+      navigate('/'); // Redirigir a la ruta principal después del inicio de sesión
     } catch (error) {
       console.error('Error en login:', error);
     }
