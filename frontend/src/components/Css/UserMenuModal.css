@@ -56,3 +56,27 @@
     border: none;
     cursor: pointer;
   }
+
+
+  .upload-button {
+    margin-top: 10px;
+    padding: 5px 10px;
+    background-color: #4A90E2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .upload-button:hover {
+    background-color: #357ABD;
+  }
+  
+  .profile-img {
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  
+  .profile-img:hover {
+    opacity: 0.8;
+  }

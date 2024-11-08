@@ -20,7 +20,19 @@ const TaskModal = ({ isOpen, setIsOpen, id }) => {
                     toast.error('something went wrong');
                 });
         }
-    }, [isOpen, id.projectId, id.id]); // Incluye 'id.projectId' y 'id.id' en el array de dependencias
+    }, [isOpen, id.projectId, id.id]);
+
+    const handleSave = (event) => {
+        event.preventDefault();
+        axios.put(`http://localhost:9000/project/${id.projectId}/task/${id.id}`, taskData)
+            .then(() => {
+                toast.success('Task updated successfully');
+                setIsOpen(false);
+            })
+            .catch((error) => {
+                toast.error('Failed to update task');
+            });
+    };
 
     return (
         <Transition appear show={isOpen} as={Fragment}>
@@ -60,8 +72,19 @@ const TaskModal = ({ isOpen, setIsOpen, id }) => {
                                     <div className="!w-8/12 px-8 space-y-3 py-4 min-h-max overflow-y-auto">
                                         <h1 className='text-3xl font-semibold'>{capitalizeFirstLetter(taskData.title)}</h1>
                                         <p className='text-gray-600'>{capitalizeFirstLetter(taskData.description)}</p>
+                                        <p className='text-gray-600'>Tipo de tarea: {taskData.taskType}</p>
                                     </div>
                                     <div className="w-4/12 py-4 pr-4">
+                                        <form onSubmit={handleSave}>
+                                            <label>
+                                                Tipo de tarea:
+                                                <select value={taskData.taskType} onChange={(e) => setTaskData({ ...taskData, taskType: e.target.value })}>
+                                                    <option value="PBI">Product Backlog Item</option>
+                                                    <option value="Bug">Bug</option>
+                                                </select>
+                                            </label>
+                                            <button type="submit">Guardar</button>
+                                        </form>
                                     </div>
                                 </div>
                             </Dialog.Panel>
