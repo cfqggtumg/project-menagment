@@ -1,13 +1,23 @@
-import React, { Fragment, useEffect, useState } from 'react';
+
+
+import React, { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import BtnPrimary from './BtnPrimary';
-import BtnSecondary from './BtnSecondary';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import BtnPrimary from './BtnPrimary';
+import BtnSecondary from './BtnSecondary';
 
-const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModal, projectId = null, taskId = null, edit = false, refreshData }) => {
+const AddTaskModal = ({ 
+    isAddTaskModalOpen, 
+    setAddTaskModal, 
+    projectId = null, 
+    taskId = null, 
+    edit = false, 
+    refreshData = () => {} // Valor por defecto para evitar el error
+}) => {
     const [title, setTitle] = useState('');
     const [desc, setDesc] = useState('');
+    const [taskType, setTaskType] = useState('PBI');
 
     useEffect(() => {
         if (edit && isAddTaskModalOpen) {
@@ -15,48 +25,57 @@ const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModal, projectId = null, t
                 .then((res) => {
                     setTitle(res.data[0].task[0].title);
                     setDesc(res.data[0].task[0].description);
+                    setTaskType(res.data[0].task[0].taskType || 'PBI');
                 })
                 .catch((error) => {
                     toast.error('Something went wrong');
                 });
-            console.log('edit function call');
         }
-    }, [edit, projectId, taskId, isAddTaskModalOpen]); // Incluye 'edit', 'projectId' y 'taskId' en el array de dependencias
+    }, [edit, projectId, taskId, isAddTaskModalOpen]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        const taskData = {
+            title,
+            description: desc,
+            taskType
+        };
+
         if (!edit) {
-            axios.post(`http://localhost:9000/project/${projectId}/task`, { title, description: desc })
-                .then((res) => {
+            axios.post(`http://localhost:9000/project/${projectId}/task`, taskData)
+                .then(() => {
+                    toast.success('Task added successfully');
+                    if (typeof refreshData === 'function') {
+                        refreshData(); // Verificar que sea una función antes de llamarla 
+                    }
                     setAddTaskModal(false);
-                    toast.success('Task created successfully');
-                    setTitle('');
-                    setDesc('');
                 })
                 .catch((error) => {
-                    if (error.response.status === 422) {
-                        toast.error(error.response.data.details[0].message);
-                    } else {
-                        toast.error('Something went wrong');
-                    }
+                    toast.error('Failed to add task');
+                
                 });
         } else {
-            axios.put(`http://localhost:9000/project/${projectId}/task/${taskId}`, { title, description: desc })
-                .then((res) => {
+            axios.put(`http://localhost:9000/project/${projectId}/task/${taskId}`, taskData)
+                .then(() => {
+                    toast.success('Task updated successfully');
+                    if (typeof refreshData === 'function') {
+                        refreshData(); // Verificar que sea una función antes de llamarla
+                    }
                     setAddTaskModal(false);
-                    toast.success('Task is updated');
-                    refreshData(true);
-                    setTitle('');
-                    setDesc('');
                 })
                 .catch((error) => {
-                    if (error.response.status === 422) {
-                        toast.error(error.response.data.details[0].message);
-                    } else {
-                        toast.error('Something went wrong');
-                    }
+                    toast.error('Failed to update task');
                 });
         }
+    };
+
+    const getIcon = () => {
+        if (taskType === 'PBI') {
+            return <span style={{ color: 'blue', position: 'absolute', top: '10px', left: '10px' }}>📄</span>;
+        } else if (taskType === 'Bug') {
+            return <span style={{ color: 'red', position: 'absolute', top: '10px', left: '10px' }}>🐞</span>;
+        }
+        return null;
     };
 
     return (
@@ -84,7 +103,8 @@ const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModal, projectId = null, t
                             leaveFrom="opacity-100 scale-100"
                             leaveTo="opacity-0 scale-95"
                         >
-                            <Dialog.Panel className="rounded-md bg-white w-6/12">
+                            <Dialog.Panel className="rounded-md bg-white w-6/12 relative">
+                                {getIcon()}
                                 <Dialog.Title as='div' className={'bg-white shadow px-6 py-4 rounded-t-md sticky top-0'}>
                                     {!edit ? (<h1>Add Task</h1>) : (<h1>Edit Task</h1>)}
                                     <button onClick={() => setAddTaskModal(false)} className='absolute right-6 top-4 text-gray-500 hover:bg-gray-100 rounded focus:outline-none focus:ring focus:ring-offset-1 focus:ring-indigo-200'>
@@ -101,6 +121,13 @@ const AddTaskModal = ({ isAddTaskModalOpen, setAddTaskModal, projectId = null, t
                                     <div className='mb-2'>
                                         <label htmlFor="Description" className='block text-gray-600'>Description</label>
                                         <textarea value={desc} onChange={(e) => setDesc(e.target.value)} className='border border-gray-300 rounded-md w-full text-sm py-2 px-2.5 focus:border-indigo-500 focus:outline-offset-1 focus:outline-indigo-400' rows="6" placeholder='Task description'></textarea>
+                                    </div>
+                                    <div className='mb-3'>
+                                        <label htmlFor="taskType" className='block text-gray-600'>Tipo de tarea</label>
+                                        <select value={taskType} onChange={(e) => setTaskType(e.target.value)} className='border border-gray-300 rounded-md w-full text-sm py-2 px-2.5 focus:border-indigo-500 focus:outline-offset-1 focus:outline-indigo-400'>
+                                            <option value="PBI">Product Backlog Item</option>
+                                            <option value="Bug">Bug</option>
+                                        </select>
                                     </div>
                                     <div className='flex justify-end items-center space-x-2'>
                                         <BtnSecondary onClick={() => setAddTaskModal(false)}>Cancel</BtnSecondary>

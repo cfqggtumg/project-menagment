@@ -22,14 +22,24 @@ const TaskModal = ({ isOpen, setIsOpen, id }) => {
         }
     }, [isOpen, id.projectId, id.id]);
 
+
     const handleSave = (event) => {
         event.preventDefault();
-        axios.put(`http://localhost:9000/project/${id.projectId}/task/${id.id}`, taskData)
+        
+        // Asegúrate de que todos los campos requeridos estén presentes
+        const updatedTaskData = {
+            title: taskData.title,
+            description: taskData.description || '',
+            taskType: taskData.taskType || 'PBI'  // Valor por defecto si no existe
+        };
+
+        axios.put(`http://localhost:9000/project/${id.projectId}/task/${id.id}`, updatedTaskData)
             .then(() => {
                 toast.success('Task updated successfully');
                 setIsOpen(false);
             })
             .catch((error) => {
+                console.error('Error updating task:', error);
                 toast.error('Failed to update task');
             });
     };

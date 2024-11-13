@@ -5,8 +5,8 @@ import Project from '../models/index.js';
 import rateLimit from 'express-rate-limit';
 
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 100, // límite de 100 solicitudes por ventana
 });
 
 const api = express.Router();
@@ -16,105 +16,71 @@ api.get('/projects', async (_, res) => {
         const data = await Project.find({}, { task: 0, __v: 0, updatedAt: 0 });
         return res.send(data);
     } catch (error) {
-        return res.send(error);
+        return res.status(500).send({ error: true, message: error.message });
     }
 });
 
 api.get('/project/:id', async (req, res) => {
-    if (!req.params.id) return res.status(422).send({ data: { error: true, message: 'Id is required' } });
+    if (!req.params.id) return res.status(422).send({ error: true, message: 'Id is required' });
     try {
         const data = await Project.find({ _id: new mongoose.Types.ObjectId(req.params.id) }).sort({ order: 1 });
         return res.send(data);
     } catch (error) {
-        return res.send(error);
+        return res.status(500).send({ error: true, message: error.message });
     }
 });
 
 api.post('/project', async (req, res) => {
-    // validate type 
-    const project = joi.object({
-        title: joi.string().min(3).max(30).required(),
-        description: joi.string().required(),
+    const schema = joi.object({
+        title: joi.string().required(),
+        description: joi.string().optional(),
     });
 
-    // validation
-    const { error, value } = project.validate({ title: req.body.title, description: req.body.description });
-    if (error) return res.status(422).send({ error: true, message: 'Validation error' });
-
-    // insert data 
     try {
-        const data = await new Project(value).save();
-        res.send({ data: { title: data.title, description: data.description, updatedAt: data.updatedAt, _id: data._id } });
-    } catch (e) {
-        if (e.code === 11000) {
-            return res.status(422).send({ data: { error: true, message: 'title must be unique' } });
-        } else {
-            return res.status(500).send({ data: { error: true, message: 'server error ' + e.code } });
-        }
+        await schema.validateAsync(req.body);
+    } catch (error) {
+        return res.status(422).send({ error: true, message: error.message });
+    }
+
+    try {
+        const project = new Project(req.body);
+        const data = await project.save();
+        return res.send(data);
+    } catch (error) {
+        return res.status(500).send({ error: true, message: error.message });
     }
 });
 
 api.put('/project/:id', async (req, res) => {
-    // validate type 
-    const project = joi.object({
-        title: joi.string().min(3).max(30).required(),
-        description: joi.string().required(),
+    if (!req.params.id) return res.status(422).send({ error: true, message: 'Id is required' });
+
+    const schema = joi.object({
+        title: joi.string().required(),
+        description: joi.string().optional(),
     });
 
-    // validation
-    const { error, value } = project.validate({ title: req.body.title, description: req.body.description });
-    if (error) return res.status(422).send(error);
-
-    Project.updateOne({ _id: new mongoose.Types.ObjectId(req.params.id) }, { ...value }, { upsert: true }, (error, data) => {
-        if (error) {
-            res.status(500).send({ data: { error: true, message: 'An error occurred while updating the project' } });
-        } else {
-            res.send(data);
-        }
-    });
-});
-
-api.delete('/project/:id', async (req, res) => {
     try {
-        const data = await Project.deleteOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
-        res.send(data);
+        await schema.validateAsync(req.body);
     } catch (error) {
-        res.send(error);
+        return res.status(422).send({ error: true, message: error.message });
+    }
+
+    try {
+        const data = await Project.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        return res.send(data);
+    } catch (error) {
+        return res.status(500).send({ error: true, message: error.message });
     }
 });
 
-// task api   
-api.post('/project/:id/task', async (req, res) => {
+api.delete('/project/:id', async (req, res) => {
     if (!req.params.id) return res.status(422).send({ error: true, message: 'Id is required' });
 
-    // validate type 
-    const task = joi.object({
-        title: joi.string().min(3).max(30).required(),
-        description: joi.string().required(),
-    });
-
-    const { error, value } = task.validate({ title: req.body.title, description: req.body.description });
-    if (error) return res.status(422).send(error);
-
     try {
-        const project = await Project.find(
-            { _id: new mongoose.Types.ObjectId(req.params.id) },
-            { "task.index": 1 }
-        ).sort({ 'task.index': 1 });
-
-        // Asegúrate de manejar el caso en que no se encuentre el proyecto
-        if (project.length === 0) {
-            return res.status(404).send({ error: true, message: 'Project not found' });
-        }
-
-        const projectTasks = project.length ? project[0].task : [];
-        let countTaskLength = [projectTasks.length, projectTasks.length > 0 ? Math.max(...projectTasks.map(o => o.index)) : projectTasks.length];
-
-        const data = await Project.updateOne({ _id: new mongoose.Types.ObjectId(req.params.id) }, { $push: { task: { ...value, stage: "Requested", order: countTaskLength[0], index: countTaskLength[1] + 1 } } });
+        const data = await Project.findByIdAndDelete(req.params.id);
         return res.send(data);
     } catch (error) {
-        console.log(error);
-        return res.status(500).send(error);
+        return res.status(500).send({ error: true, message: error.message });
     }
 });
 
@@ -122,84 +88,158 @@ api.get('/project/:id/task/:taskId', async (req, res) => {
     if (!req.params.id || !req.params.taskId) return res.status(422).send({ error: true, message: 'Id and TaskId are required' });
 
     try {
-        let data = await Project.find(
-            { _id: new mongoose.Types.ObjectId(req.params.id) },
+        let data = await Project.aggregate([
+            { $match: { _id: new mongoose.Types.ObjectId(req.params.id) } },
             {
-                task: {
-                    $filter: {
-                        input: "$task",
-                        as: "task",
-                        cond: {
-                            $in: [
-                                "$$task._id",
-                                [
-                                    new mongoose.Types.ObjectId(req.params.taskId)
+                $project: {
+                    task: {
+                        $filter: {
+                            input: "$task",
+                            as: "task",
+                            cond: {
+                                $in: [
+                                    "$$task._id",
+                                    [new mongoose.Types.ObjectId(req.params.taskId)]
                                 ]
-                            ]
+                            }
                         }
                     }
                 }
             }
+        ]);
+
+        if (data[0].task.length < 1) return res.status(404).send({ error: true, message: 'Task not found' });
+        res.send(data);
+    } catch (error) {
+        return res.status(500).send({ error: true, message: error.message });
+    }
+});
+
+api.post('/project/:id/task', async (req, res) => {
+    if (!req.params.id) return res.status(422).send({ error: true, message: 'Id is required' });
+
+    const schema = joi.object({
+        title: joi.string().required(),
+        description: joi.string().optional(),
+        taskType: joi.string().valid('PBI', 'Bug').default('PBI')
+    });
+
+    try {
+        await schema.validateAsync(req.body);
+    } catch (error) {
+        return res.status(422).send({ error: true, message: error.message });
+    }
+
+    try {
+        const newTask = {
+            ...req.body,
+            _id: new mongoose.Types.ObjectId(),
+            stage: 'Requested', // Aseguramos que toda nueva tarea comience en 'Requested'
+            order: Date.now() // Usamos timestamp como orden inicial
+        };
+
+        let data = await Project.findByIdAndUpdate(
+            req.params.id,
+            { $push: { task: newTask } },
+            { new: true }
         );
 
-        if (data[0].task.length < 1) return res.status(404).send({ error: true, message: 'record not found' });
         return res.send(data);
     } catch (error) {
-        return res.status(500).send(error);
+        return res.status(500).send({ error: true, message: error.message });
     }
 });
 
 api.put('/project/:id/task/:taskId', async (req, res) => {
-    if (!req.params.id || !req.params.taskId) return res.status(500).send(`server error`);
+    if (!req.params.id || !req.params.taskId) return res.status(422).send({ error: true, message: 'Id and TaskId are required' });
 
-    const task = joi.object({
-        title: joi.string().min(3).max(30).required(),
-        description: joi.string().required(),
+    const schema = joi.object({
+        title: joi.string().required(),
+        description: joi.string().optional(),
+        taskType: joi.string().valid('PBI', 'Bug').default('PBI')
     });
 
-    const { error, value } = task.validate({ title: req.body.title, description: req.body.description });
-    if (error) return res.status(422).send(error);
-
     try {
-        const data = await Project.updateOne({
-            _id: new mongoose.Types.ObjectId(req.params.id),
-            task: { $elemMatch: { _id: new mongoose.Types.ObjectId(req.params.taskId) } }
-        }, { $set: { "task.$.title": value.title, "task.$.description": value.description } });
-        return res.send(data);
+        await schema.validateAsync(req.body);
     } catch (error) {
-        return res.send(error);
+        return res.status(422).send({ error: true, message: error.message });
     }
-});
-
-api.delete('/project/:id/task/:taskId', limiter, async (req, res) => {
-    if (!req.params.id || !req.params.taskId) return res.status(500).send(`server error`);
 
     try {
-        const data = await Project.updateOne({ _id: new mongoose.Types.ObjectId(req.params.id) }, { $pull: { task: { _id: new mongoose.Types.ObjectId(req.params.taskId) } } });
+        let data = await Project.findOneAndUpdate(
+            {
+                _id: new mongoose.Types.ObjectId(req.params.id),
+                'task._id': new mongoose.Types.ObjectId(req.params.taskId)
+            },
+            {
+                $set: {
+                    'task.$.title': req.body.title,
+                    'task.$.description': req.body.description,
+                    'task.$.taskType': req.body.taskType,
+                    'task.$.updated_at': Date.now()
+                }
+            },
+            { new: true }
+        );
+
+        if (!data) {
+            return res.status(404).send({ error: true, message: 'Task not found' });
+        }
+
         return res.send(data);
     } catch (error) {
-        return res.send(error);
+        return res.status(500).send({ error: true, message: error.message });
     }
 });
 
 api.put('/project/:id/todo', async (req, res) => {
-    let todo = [];
+    if (!req.params.id) return res.status(422).send({ error: true, message: 'Id is required' });
 
-    for (const key in req.body) {
-        for (const index in req.body[key].items) {
-            req.body[key].items[index].stage = req.body[key].name;
-            todo.push({ name: req.body[key].items[index]._id, stage: req.body[key].items[index].stage, order: index });
-        }
+    try {
+        const project = await Project.findById(req.params.id);
+        if (!project) return res.status(404).send({ error: true, message: 'Project not found' });
+
+        // Actualizar el estado y orden de las tareas
+        Object.keys(req.body).forEach(key => {
+            const column = req.body[key];
+            column.items.forEach((task, index) => {
+                const taskIndex = project.task.findIndex(t => t._id.toString() === task._id);
+                if (taskIndex !== -1) {
+                    project.task[taskIndex].stage = column.name;
+                    project.task[taskIndex].order = index;
+                }
+            });
+        });
+
+        await project.save();
+        return res.send(project);
+    } catch (error) {
+        return res.status(500).send({ error: true, message: error.message });
     }
+});
 
-    todo.map(async (item) => {
-        await Project.updateOne({
-            _id: new mongoose.Types.ObjectId(req.params.id),
-            task: { $elemMatch: { _id: new mongoose.Types.ObjectId(item.name) } }
-        }, { $set: { "task.$.order": item.order, "task.$.stage": item.stage } });
-    });
+api.delete('/project/:id/task/:taskId', async (req, res) => {
+    if (!req.params.id || !req.params.taskId) return res.status(422).send({ error: true, message: 'Id and TaskId are required' });
 
-    res.send(todo);
+    try {
+        let data = await Project.findByIdAndUpdate(
+            req.params.id,
+            {
+                $pull: {
+                    task: { _id: new mongoose.Types.ObjectId(req.params.taskId) }
+                }
+            },
+            { new: true }
+        );
+
+        if (!data) {
+            return res.status(404).send({ error: true, message: 'Task or Project not found' });
+        }
+
+        return res.send(data);
+    } catch (error) {
+        return res.status(500).send({ error: true, message: error.message });
+    }
 });
 
 export default api;
