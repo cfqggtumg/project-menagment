@@ -18,6 +18,7 @@ const taskSchema = new mongoose.Schema({
         enum: ['Requested', 'To do', 'In Progress', 'Done'],
         default: 'Requested'  // Aseguramos que toda nueva tarea tenga este estado
     },
+    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Añadir este campo
     index: Number,
     attachment: [
         { type: String, url: String }

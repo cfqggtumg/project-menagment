@@ -116,12 +116,11 @@ api.get('/project/:id/task/:taskId', async (req, res) => {
 });
 
 api.post('/project/:id/task', async (req, res) => {
-    if (!req.params.id) return res.status(422).send({ error: true, message: 'Id is required' });
-
     const schema = joi.object({
         title: joi.string().required(),
         description: joi.string().optional(),
-        taskType: joi.string().valid('PBI', 'Bug').default('PBI')
+        taskType: joi.string().valid('PBI', 'Bug').default('PBI'),
+        assignedTo: joi.string().optional() // Añadir este campo
     });
 
     try {
@@ -134,8 +133,8 @@ api.post('/project/:id/task', async (req, res) => {
         const newTask = {
             ...req.body,
             _id: new mongoose.Types.ObjectId(),
-            stage: 'Requested', // Aseguramos que toda nueva tarea comience en 'Requested'
-            order: Date.now() // Usamos timestamp como orden inicial
+            stage: 'Requested',
+            order: Date.now()
         };
 
         let data = await Project.findByIdAndUpdate(
@@ -151,12 +150,11 @@ api.post('/project/:id/task', async (req, res) => {
 });
 
 api.put('/project/:id/task/:taskId', async (req, res) => {
-    if (!req.params.id || !req.params.taskId) return res.status(422).send({ error: true, message: 'Id and TaskId are required' });
-
     const schema = joi.object({
         title: joi.string().required(),
         description: joi.string().optional(),
-        taskType: joi.string().valid('PBI', 'Bug').default('PBI')
+        taskType: joi.string().valid('PBI', 'Bug').default('PBI'),
+        assignedTo: joi.string().optional() // Añadir este campo
     });
 
     try {
@@ -176,6 +174,7 @@ api.put('/project/:id/task/:taskId', async (req, res) => {
                     'task.$.title': req.body.title,
                     'task.$.description': req.body.description,
                     'task.$.taskType': req.body.taskType,
+                    'task.$.assignedTo': req.body.assignedTo, // Añadir este campo
                     'task.$.updated_at': Date.now()
                 }
             },
