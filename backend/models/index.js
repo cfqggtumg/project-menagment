@@ -15,7 +15,7 @@ const taskSchema = new mongoose.Schema({
     order: Number,
     stage: {
         type: String,
-        enum: ['Requested', 'In Progress', 'Done'],
+        enum: ['Requested', 'To do', 'In Progress', 'Done'],
         default: 'Requested'  // Aseguramos que toda nueva tarea tenga este estado
     },
     index: Number,
