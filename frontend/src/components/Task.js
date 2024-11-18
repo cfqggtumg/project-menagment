@@ -19,6 +19,7 @@ function Task() {
   const [title, setTitle] = useState('');
   const { projectId } = useParams();
   const navigate = useNavigate();
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     if (!isAddTaskModalOpen || isRenderChange) {
@@ -49,6 +50,16 @@ function Task() {
         });
     }
   }, [projectId, isAddTaskModalOpen, isRenderChange]);
+
+  useEffect(() => {
+    axios.get('http://localhost:9000/api/users')
+      .then((res) => {
+        setUsers(res.data);
+      })
+      .catch((error) => {
+        console.error('Failed to fetch users:', error);
+      });
+  }, []);
 
   const updateTodo = (data) => {
     axios.put(`http://localhost:9000/project/${projectId}/todo`, data)
@@ -136,6 +147,11 @@ function Task() {
     updateTodo(data);
   };
 
+  const getUsername = (userId) => {
+    const user = users.find(user => user._id === userId);
+    return user ? user.username : 'Unknown User';
+  };
+
   return (
     <div className='px-12 py-6 w-full'>
       {projectId && (
@@ -203,6 +219,11 @@ function Task() {
                                         </div>
                                         <p className="text-xs text-slate-500 leading-4 -tracking-tight">{item.description.slice(0, 60)}{item.description.length > 60 && '...'}</p>
                                         <span className="py-1 px-2.5 bg-indigo-100 text-indigo-600 rounded-md text-xs font-medium mt-1 inline-block">Task-{item.index}</span>
+                                        {item.assignedTo && (
+                                          <span className="py-1 px-2.5 bg-green-100 text-green-600 rounded-md text-xs font-medium mt-1 inline-block">
+                                            {getUsername(item.assignedTo)}
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
                                   );
