@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "serve": "nodemon server.js"
+    "serve": "NODE_OPTIONS='--max-old-space-size=128' nodemon server.js"
   },
   "keywords": [],
   "author": "",
