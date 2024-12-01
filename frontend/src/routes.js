@@ -1,10 +1,11 @@
-
 import Dashboard from "./views/Dashboard";
 import Main from './views/Main'; // Importa el nuevo componente
 import UserAdmin from './components/UserAdmin';  // Importa UserAdmin
 import RoleAdmin from './components/RoleAdmin';  // Importa RoleAdmin
-
-
+import TestExecution from './components/TestExecution';
+import DefectManagement from './components/DefectManagement';
+import Reports from './components/Reports';
+import TestPlans from './components/TestPlanList'; // Agregar al inicio del archivo
 
 var routes = [
   {
@@ -29,6 +30,26 @@ var routes = [
     name: "Roles",
     component: <RoleAdmin />, // Añade la nueva ruta
   },
-
+  {
+    path: "/test-execution",
+    name: "Test Execution",
+    component: <TestExecution />,
+  },
+  {
+    path: "/defect-management",
+    name: "Defect Management",
+    component: <DefectManagement />,
+  },
+  {
+    path: "/reports",
+    name: "Reports",
+    component: <Reports />,
+  },
+  {
+    path: "/test-plans",
+    name: "Test Plans",
+    component: <TestPlans />,
+  },
 ];
+
 export default routes;

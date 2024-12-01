@@ -5,7 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "serve": "NODE_OPTIONS='--max-old-space-size=128' nodemon server.js"
+    "serve": "NODE_OPTIONS='--max-old-space-size=128' nodemon server.js",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +24,7 @@
     "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
+    "cypress": "^13.16.0",
     "nodemon": "^3.1.7"
   }
 }

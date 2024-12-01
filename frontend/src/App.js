@@ -1,5 +1,5 @@
-import React, { useEffect, useCallback } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import React, { useEffect, useCallback, useState } from 'react';
+import { Routes, Route, Navigate, useNavigate, Link } from 'react-router-dom';
 import AppLayout from "./components/AppLayout";
 import { Toaster } from "react-hot-toast";
 import Dashboard from './views/Dashboard';
@@ -8,9 +8,15 @@ import UserAdmin from './components/UserAdmin';
 import RoleAdmin from './components/RoleAdmin';
 import Login from './components/Login';
 import Task from './components/Task'; // Asegúrate de importar Task si lo usas
+import routes from './routes'; // Importa routes
+import TestExecution from './components/TestExecution'; // Importa TestExecution
+import DefectManagement from './components/DefectManagement'; // Importa DefectManagement
+import Reports from './components/Reports'; // Importa Reports
 
 function App() {
   const navigate = useNavigate();
+  // eslint-disable-next-line no-unused-vars
+  const [isCollapsed, setIsCollapsed] = useState(false); // Define isCollapsed
 
   // Usar useCallback para memorizar la función
   const checkSession = useCallback(() => {
@@ -88,9 +94,57 @@ function App() {
                 </PrivateRoute>
               }
             />
+            <Route
+              path="/test-execution"
+              element={
+                <PrivateRoute>
+                  <TestExecution />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/defect-management"
+              element={
+                <PrivateRoute>
+                  <DefectManagement />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <PrivateRoute>
+                  <Reports />
+                </PrivateRoute>
+              }
+            />
           </Routes>
         </AppLayout>
       </div>
+      <ul className={`mt-4 ${isCollapsed ? 'hidden' : 'block'}`}>
+        {routes.map((route, index) => (
+            <li key={index} className="mb-2">
+                <Link to={route.path} className="text-white hover:text-gray-400">
+                    {route.name}
+                </Link>
+            </li>
+        ))}
+        <li className="mb-2">
+            <Link to="/test-execution" className="text-white hover:text-gray-400">
+                Ejecución de Pruebas
+            </Link>
+        </li>
+        <li className="mb-2">
+            <Link to="/defect-management" className="text-white hover:text-gray-400">
+                Gestión de Defectos
+            </Link>
+        </li>
+        <li className="mb-2">
+            <Link to="/reports" className="text-white hover:text-gray-400">
+                Reportes
+            </Link>
+        </li>
+      </ul>
     </div>
   );
 }

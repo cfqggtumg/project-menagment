@@ -9,12 +9,16 @@ import cors from "cors";
 import api from './routes/index.js';
 import multer from 'multer';
 import path from 'path';
+import testCaseRoutes from './routes/testCaseRoutes.js';
+import defectRoutes from './routes/defectRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
+import runTestRoutes from './routes/runTestRoutes.js'; // Importa las rutas de run tests
 
 dotenv.config();
 
 // Inicializar express
 const app = express();
-const PORT = process.env.SERVER_PORT || 9000;
+const PORT = process.env.PORT || 9000;
 
 // Configuración de multer
 const storage = multer.diskStorage({
@@ -48,8 +52,12 @@ app.use('/api/users', userRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/auth', authRoutes);
 app.use(api);
+app.use('/api/test-cases', testCaseRoutes);
+app.use('/api/defects', defectRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/run-tests', runTestRoutes); // Usa las rutas de run tests
 
 // Iniciar servidor
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en el puerto ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
